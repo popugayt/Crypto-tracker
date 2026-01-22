@@ -15,11 +15,12 @@ class Crypto {
 
   factory Crypto.fromJson(Map<String, dynamic> json) {
     return Crypto(
-      id: json['id'],
-      name: json['name'],
-      symbol: json['symbol'],
-      price: json['current_price'].toDouble(),
-      change24h: json['price_change_percentage_24h'].toDouble(),
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      symbol: json['symbol'] ?? '',
+      price: (json['current_price'] as num?)?.toDouble() ?? 0.0,
+      change24h:
+      (json['price_change_percentage_24h'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }
