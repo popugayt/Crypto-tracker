@@ -14,7 +14,8 @@ dependencies:
 
   cupertino_icons: ^1.0.8
   http: ^1.2.0
-  fl_chart: ^0.66.0   # 🔥 для графика крипты
+  fl_chart: ^0.66.0
+  shared_preferences: ^2.2.2   # ✅ добавили
 
 dev_dependencies:
   flutter_test:
