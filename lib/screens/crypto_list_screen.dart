@@ -4,6 +4,7 @@ import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import 'crypto_detail_screen.dart';
 import 'login_screen.dart';
+import '../services/notification_service.dart';
 
 class CryptoListScreen extends StatefulWidget {
   const CryptoListScreen({super.key});
@@ -33,7 +34,7 @@ class _CryptoListScreenState extends State<CryptoListScreen> {
                 MaterialPageRoute(builder: (_) => const LoginScreen()),
               );
             },
-          )
+          ),
         ],
       ),
       body: _currentTab == 0 ? _buildAllCryptos() : _buildPortfolio(),
@@ -63,10 +64,11 @@ class _CryptoListScreenState extends State<CryptoListScreen> {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
+        final cryptos = snapshot.data!;
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: snapshot.data!.length,
-          itemBuilder: (_, i) => _cryptoCard(snapshot.data![i]),
+          itemCount: cryptos.length,
+          itemBuilder: (_, i) => _cryptoCard(cryptos[i]),
         );
       },
     );
@@ -76,18 +78,14 @@ class _CryptoListScreenState extends State<CryptoListScreen> {
     if (_portfolio.isEmpty) {
       return const Center(child: Text('Портфель пуст'));
     }
-
     return FutureBuilder<List<Crypto>>(
       future: ApiService.fetchCryptos(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
-
-        final coins = snapshot.data!
-            .where((c) => _portfolio.contains(c.id))
-            .toList();
-
+        final coins =
+        snapshot.data!.where((c) => _portfolio.contains(c.id)).toList();
         return ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: coins.length,
@@ -119,6 +117,7 @@ class _CryptoListScreenState extends State<CryptoListScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            // Информация о криптовалюте
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -129,6 +128,7 @@ class _CryptoListScreenState extends State<CryptoListScreen> {
                 Text(crypto.name, style: const TextStyle(color: Colors.grey)),
               ],
             ),
+            // Цена, изменение и кнопка добавления
             Row(
               children: [
                 Column(
@@ -138,29 +138,37 @@ class _CryptoListScreenState extends State<CryptoListScreen> {
                     Text(
                       '${crypto.change24h.toStringAsFixed(2)}%',
                       style: TextStyle(
-                        color: crypto.change24h >= 0
-                            ? Colors.green
-                            : Colors.red,
+                        color: crypto.change24h >= 0 ? Colors.green : Colors.red,
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(width: 8),
                 IconButton(
                   icon: Icon(
-                    inPortfolio
-                        ? Icons.check_circle
-                        : Icons.add_circle_outline,
+                    inPortfolio ? Icons.check_circle : Icons.add_circle_outline,
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     setState(() {
-                      inPortfolio
-                          ? _portfolio.remove(crypto.id)
-                          : _portfolio.add(crypto.id);
+                      if (inPortfolio) {
+                        _portfolio.remove(crypto.id);
+                      } else {
+                        _portfolio.add(crypto.id);
+                      }
                     });
+
+                    if (!inPortfolio) {
+                      await NotificationService.showNotification(
+                        title: 'Портфель обновлён',
+                        body:
+                        '${crypto.name} успешно добавлена в ваш портфель',
+                      );
+                      print('Уведомление отправлено'); // для отладки
+                    }
                   },
-                )
+                ),
               ],
-            )
+            ),
           ],
         ),
       ),
