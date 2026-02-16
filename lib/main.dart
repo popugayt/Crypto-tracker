@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/crypto_list_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/auth_service.dart';
@@ -6,34 +7,78 @@ import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Инициализация уведомлений
   await NotificationService.init();
-
-  // Проверка авторизации
   final isLogged = await AuthService.isLoggedIn();
 
-  runApp(MyApp(isLogged: isLogged));
+  final prefs = await SharedPreferences.getInstance();
+  final isDark = prefs.getBool('isDark') ?? true;
+
+  runApp(MyApp(isLogged: isLogged, isDark: isDark));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final bool isLogged;
-  const MyApp({super.key, required this.isLogged});
+  final bool isDark;
+
+  const MyApp({
+    super.key,
+    required this.isLogged,
+    required this.isDark,
+  });
+
+  static _MyAppState? of(BuildContext context) =>
+      context.findAncestorStateOfType<_MyAppState>();
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late bool _isDark;
+
+  bool get isDark => _isDark;
+
+  @override
+  void initState() {
+    super.initState();
+    _isDark = widget.isDark;
+  }
+
+  void toggleTheme() async {
+    setState(() => _isDark = !_isDark);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDark', _isDark);
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
+      themeMode: _isDark ? ThemeMode.dark : ThemeMode.light,
+
+      darkTheme: ThemeData(   // ← УБРАЛИ const
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF4FC3F7),
-          secondary: Color(0xFF81D4FA),
+        scaffoldBackgroundColor: const Color(0xFF0E0F1A),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
         ),
       ),
-      home: isLogged ? const CryptoListScreen() : const LoginScreen(),
+
+      theme: ThemeData(   // ← УБРАЛИ const
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFF5F6FA),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          foregroundColor: Colors.black,
+        ),
+      ),
+
+      home: widget.isLogged
+          ? CryptoListScreen()
+          : LoginScreen(),
     );
   }
-}
 
+}

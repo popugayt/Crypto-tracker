@@ -39,10 +39,6 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    if (!isLogin) {
-      await AuthService.login(_login.text, _password.text);
-    }
-
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const CryptoListScreen()),
@@ -51,51 +47,110 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(24),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: isDark
+                ? [const Color(0xFF0E0F1A), const Color(0xFF1C1F2E)]
+                : [Colors.blue.shade200, Colors.white],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
         child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                isLogin ? 'Вход' : 'Регистрация',
-                style: const TextStyle(fontSize: 26),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withOpacity(0.05)
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 20,
+                  ),
+                ],
               ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: _login,
-                decoration: const InputDecoration(labelText: 'Логин'),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.currency_bitcoin,
+                    size: 60,
+                    color: Colors.orange,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    isLogin ? 'Добро пожаловать' : 'Создать аккаунт',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  TextField(
+                    controller: _login,
+                    decoration: const InputDecoration(
+                      labelText: 'Логин',
+                      prefixIcon: Icon(Icons.person),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _password,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Пароль',
+                      prefixIcon: Icon(Icons.lock),
+                    ),
+                  ),
+                  if (error.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Text(
+                        error,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _submit,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Text(
+                        isLogin ? 'Войти' : 'Зарегистрироваться',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        isLogin = !isLogin;
+                        error = '';
+                      });
+                    },
+                    child: Text(
+                      isLogin
+                          ? 'Создать аккаунт'
+                          : 'У меня уже есть аккаунт',
+                    ),
+                  ),
+                ],
               ),
-              TextField(
-                controller: _password,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Пароль'),
-              ),
-              if (error.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(error, style: const TextStyle(color: Colors.red)),
-                ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _submit,
-                child: Text(isLogin ? 'Войти' : 'Зарегистрироваться'),
-              ),
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    isLogin = !isLogin;
-                    error = '';
-                  });
-                },
-                child: Text(
-                  isLogin
-                      ? 'Создать аккаунт'
-                      : 'У меня уже есть аккаунт',
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
